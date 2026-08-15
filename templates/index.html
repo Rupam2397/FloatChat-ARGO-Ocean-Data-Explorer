@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>FloatChat | ARGO Ocean Data</title>
+
+    <link rel="stylesheet"
+          href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+
+    <!-- NAVBAR -->
+    <header class="navbar">
+
+        <div class="logo">
+            🌊 FloatChat
+        </div>
+
+        <div class="nav-text">
+            ARGO Ocean Data Explorer
+        </div>
+
+    </header>
+
+
+    <!-- MAIN CONTENT -->
+    <main class="container">
+
+        <!-- HERO -->
+        <section class="hero">
+
+            <h1>
+                Explore Ocean Data with AI
+            </h1>
+
+            <p>
+                Ask questions about ARGO ocean observations
+                using natural language.
+            </p>
+
+        </section>
+
+
+        <!-- CHAT -->
+        <section class="chat-card">
+
+            <h2>
+                💬 Ask FloatChat
+            </h2>
+
+            <p class="description">
+                Ask a question about ocean temperature, salinity,
+                location, depth or other ARGO observations.
+            </p>
+
+
+            <div class="input-area">
+
+                <input
+                    type="text"
+                    id="question"
+                    placeholder="Example: What is the average ocean temperature?"
+                    autocomplete="off"
+                >
+
+                <button id="askButton" type="button">
+                    Ask
+                </button>
+
+            </div>
+
+        </section>
+
+
+        <!-- RESULTS -->
+        <section class="result-card">
+
+            <h2>
+                📊 Results
+            </h2>
+
+            <div id="result">
+
+                <p class="placeholder">
+                    Your analysis and visualization will appear here.
+                </p>
+
+            </div>
+
+        </section>
+
+
+        <!-- INFORMATION CARDS -->
+        <section class="info-grid">
+
+            <div class="info-card">
+
+                <h3>
+                    🌡️ Temperature
+                </h3>
+
+                <p>
+                    Explore ocean temperature measurements
+                    collected by ARGO floats.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>
+                    💧 Salinity
+                </h3>
+
+                <p>
+                    Analyze salinity observations across
+                    different ocean regions.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>
+                    📍 Location
+                </h3>
+
+                <p>
+                    Explore ARGO observations based on
+                    geographic location.
+                </p>
+
+            </div>
+
+        </section>
+
+    </main>
+
+
+    <!-- FOOTER -->
+    <footer>
+
+        <p>
+            FloatChat — AI-Powered Conversational Interface
+            for ARGO Ocean Data
+        </p>
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+</body>
+
+</html>
