@@ -2,18 +2,43 @@
 <html lang="en">
 
 <head>
+
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-    <title>FloatChat | ARGO Ocean Data</title>
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    <link rel="stylesheet"
-          href="{{ url_for('static', filename='css/style.css') }}">
+    <title>
+        FloatChat | ARGO Ocean Data
+    </title>
+
+
+    <!-- CSS -->
+
+    <link
+        rel="stylesheet"
+        href="{{ url_for('static', filename='css/style.css') }}"
+    >
+
+
+    <!-- Plotly -->
+
+    <script
+        src="https://cdn.plot.ly/plotly-3.1.0.min.js">
+    </script>
+
 </head>
+
 
 <body>
 
-    <!-- NAVBAR -->
+
+    <!-- ==========================================
+         NAVBAR
+    =========================================== -->
+
     <header class="navbar">
 
         <div class="logo">
@@ -27,10 +52,15 @@
     </header>
 
 
-    <!-- MAIN CONTENT -->
+    <!-- ==========================================
+         MAIN
+    =========================================== -->
+
     <main class="container">
 
+
         <!-- HERO -->
+
         <section class="hero">
 
             <h1>
@@ -45,7 +75,10 @@
         </section>
 
 
-        <!-- CHAT -->
+        <!-- ======================================
+             CHAT
+        ======================================= -->
+
         <section class="chat-card">
 
             <h2>
@@ -53,8 +86,11 @@
             </h2>
 
             <p class="description">
-                Ask a question about ocean temperature, salinity,
-                location, depth or other ARGO observations.
+
+                Ask about temperature, salinity,
+                pressure, location, ARGO floats
+                or observations.
+
             </p>
 
 
@@ -63,11 +99,15 @@
                 <input
                     type="text"
                     id="question"
-                    placeholder="Example: What is the average ocean temperature?"
+                    placeholder="Example: Show temperature data"
                     autocomplete="off"
                 >
 
-                <button id="askButton" type="button">
+
+                <button
+                    id="askButton"
+                    type="button"
+                >
                     Ask
                 </button>
 
@@ -76,26 +116,42 @@
         </section>
 
 
-        <!-- RESULTS -->
+        <!-- ======================================
+             RESULTS
+        ======================================= -->
+
         <section class="result-card">
 
             <h2>
                 📊 Results
             </h2>
 
+
             <div id="result">
 
                 <p class="placeholder">
-                    Your analysis and visualization will appear here.
+
+                    Your ARGO analysis and
+                    visualization will appear here.
+
                 </p>
 
             </div>
 
+
+            <!-- Plotly chart/map -->
+
+            <div id="visualization"></div>
+
         </section>
 
 
-        <!-- INFORMATION CARDS -->
+        <!-- ======================================
+             INFO CARDS
+        ======================================= -->
+
         <section class="info-grid">
+
 
             <div class="info-card">
 
@@ -104,8 +160,9 @@
                 </h3>
 
                 <p>
-                    Explore ocean temperature measurements
-                    collected by ARGO floats.
+                    Analyze temperature statistics
+                    and visualize temperature against
+                    pressure.
                 </p>
 
             </div>
@@ -118,8 +175,9 @@
                 </h3>
 
                 <p>
-                    Analyze salinity observations across
-                    different ocean regions.
+                    Analyze practical salinity
+                    observations and visualize
+                    salinity against pressure.
                 </p>
 
             </div>
@@ -132,18 +190,67 @@
                 </h3>
 
                 <p>
-                    Explore ARGO observations based on
-                    geographic location.
+                    Explore the geographic coverage
+                    of ARGO observations using an
+                    interactive map.
                 </p>
 
             </div>
+
+
+            <div class="info-card">
+
+                <h3>
+                    🌊 Pressure
+                </h3>
+
+                <p>
+                    Explore the pressure range
+                    available in the ARGO dataset.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>
+                    🛰️ ARGO Floats
+                </h3>
+
+                <p>
+                    Find the number of unique
+                    profiling floats represented
+                    in the dataset.
+                </p>
+
+            </div>
+
+
+            <div class="info-card">
+
+                <h3>
+                    📊 Observations
+                </h3>
+
+                <p>
+                    Explore the number of ARGO
+                    observation records available
+                    for analysis.
+                </p>
+
+            </div>
+
 
         </section>
 
     </main>
 
 
-    <!-- FOOTER -->
+    <!-- ==========================================
+         FOOTER
+    =========================================== -->
+
     <footer>
 
         <p>
@@ -155,7 +262,11 @@
 
 
     <!-- JAVASCRIPT -->
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+
+    <script
+        src="{{ url_for('static', filename='js/script.js') }}">
+    </script>
+
 
 </body>
 

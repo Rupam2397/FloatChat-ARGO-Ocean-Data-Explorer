@@ -3,80 +3,187 @@ from flask import Flask, request, jsonify, render_template
 from data.argo_data import (
     temperature_summary,
     salinity_summary,
-    dataset_summary
+    dataset_summary,
+    temperature_data,
+    salinity_data,
+    location_data
 )
+
 
 app = Flask(__name__)
 
+
+# ==================================================
+# HOME PAGE
+# ==================================================
 
 @app.route("/")
 def home():
     return render_template("index.html")
 
 
+# ==================================================
+# ASK FLOATCHAT
+# ==================================================
+
 @app.route("/ask", methods=["POST"])
 def ask():
-    data = request.get_json()
+
+    data = request.get_json(silent=True)
 
     if not data:
         return jsonify({
-            "answer": "Please enter a question."
+            "answer": "Please enter a question.",
+            "type": "help"
         })
 
     question = data.get("question", "").strip()
 
     if not question:
         return jsonify({
-            "answer": "Please enter a question."
+            "answer": "Please enter a question.",
+            "type": "help"
         })
 
     q = question.lower()
 
-    # ---------------------------------------
-    # TEMPERATURE QUESTIONS
-    # ---------------------------------------
+
+    # ==================================================
+    # TEMPERATURE
+    # ==================================================
+
     if "temperature" in q or "temp" in q:
 
         result = temperature_summary()
 
-        answer = (
-            f"🌡️ ARGO Temperature Analysis\n\n"
-            f"Average Temperature: {result['average']} °C\n"
-            f"Minimum Temperature: {result['minimum']} °C\n"
-            f"Maximum Temperature: {result['maximum']} °C\n"
-            f"Observations: {result['count']:,}"
-        )
+        if "average" in q or "mean" in q:
+
+            answer = (
+                "🌡️ Average ARGO Temperature\n\n"
+                f"{result['average']} °C"
+            )
+
+        elif (
+            "minimum" in q
+            or "lowest" in q
+            or "min" in q
+        ):
+
+            answer = (
+                "🌡️ Minimum ARGO Temperature\n\n"
+                f"{result['minimum']} °C"
+            )
+
+        elif (
+            "maximum" in q
+            or "highest" in q
+            or "max" in q
+        ):
+
+            answer = (
+                "🌡️ Maximum ARGO Temperature\n\n"
+                f"{result['maximum']} °C"
+            )
+
+        elif (
+            "count" in q
+            or "observations" in q
+            or "records" in q
+        ):
+
+            answer = (
+                "🌡️ Temperature Observations\n\n"
+                f"{result['count']:,}"
+            )
+
+        else:
+
+            answer = (
+                "🌡️ ARGO Temperature Analysis\n\n"
+                f"Average Temperature: {result['average']} °C\n"
+                f"Minimum Temperature: {result['minimum']} °C\n"
+                f"Maximum Temperature: {result['maximum']} °C\n"
+                f"Observations: {result['count']:,}"
+            )
 
         return jsonify({
             "answer": answer,
             "type": "temperature",
-            "data": result
+            "data": result,
+            "visualization": temperature_data()
         })
 
-    # ---------------------------------------
-    # SALINITY QUESTIONS
-    # ---------------------------------------
-    elif "salinity" in q or "salinity level" in q:
+
+    # ==================================================
+    # SALINITY
+    # ==================================================
+
+    elif "salinity" in q or "salty" in q:
 
         result = salinity_summary()
 
-        answer = (
-            f"💧 ARGO Salinity Analysis\n\n"
-            f"Average Salinity: {result['average']} PSU\n"
-            f"Minimum Salinity: {result['minimum']} PSU\n"
-            f"Maximum Salinity: {result['maximum']} PSU\n"
-            f"Observations: {result['count']:,}"
-        )
+        if "average" in q or "mean" in q:
+
+            answer = (
+                "💧 Average ARGO Salinity\n\n"
+                f"{result['average']} PSU"
+            )
+
+        elif (
+            "minimum" in q
+            or "lowest" in q
+            or "min" in q
+        ):
+
+            answer = (
+                "💧 Minimum ARGO Salinity\n\n"
+                f"{result['minimum']} PSU"
+            )
+
+        elif (
+            "maximum" in q
+            or "highest" in q
+            or "max" in q
+        ):
+
+            answer = (
+                "💧 Maximum ARGO Salinity\n\n"
+                f"{result['maximum']} PSU"
+            )
+
+        elif (
+            "count" in q
+            or "observations" in q
+            or "records" in q
+        ):
+
+            answer = (
+                "💧 Salinity Observations\n\n"
+                f"{result['count']:,}"
+            )
+
+        else:
+
+            answer = (
+                "💧 ARGO Salinity Analysis\n\n"
+                f"Average Salinity: {result['average']} PSU\n"
+                f"Minimum Salinity: {result['minimum']} PSU\n"
+                f"Maximum Salinity: {result['maximum']} PSU\n"
+                f"Observations: {result['count']:,}"
+            )
 
         return jsonify({
             "answer": answer,
             "type": "salinity",
-            "data": result
+            "data": result,
+            "visualization": salinity_data()
         })
 
-    # ---------------------------------------
-    # FLOAT QUESTIONS
-    # ---------------------------------------
+
+    # ==================================================
+    # FLOATS
+    # ==================================================
+
     elif (
         "float" in q
         or "floats" in q
@@ -86,111 +193,182 @@ def ask():
         result = dataset_summary()
 
         answer = (
-            f"📍 ARGO Float Information\n\n"
-            f"Number of ARGO Floats: {result['floats']:,}\n"
-            f"Total Observations: {result['observations']:,}"
+            "🛰️ ARGO Float Information\n\n"
+            f"Number of unique ARGO floats: "
+            f"{result['floats']:,}"
         )
 
         return jsonify({
             "answer": answer,
-            "type": "dataset",
+            "type": "floats",
             "data": result
         })
 
-    # ---------------------------------------
-    # OBSERVATION QUESTIONS
-    # ---------------------------------------
+
+    # ==================================================
+    # OBSERVATIONS
+    # ==================================================
+
     elif (
         "observation" in q
         or "observations" in q
-        or "data points" in q
         or "records" in q
+        or "data points" in q
     ):
 
         result = dataset_summary()
 
         answer = (
-            f"📊 ARGO Dataset Information\n\n"
-            f"Total Observations: {result['observations']:,}\n"
-            f"ARGO Floats: {result['floats']:,}"
+            "📊 ARGO Observations\n\n"
+            f"Total observations: "
+            f"{result['observations']:,}"
         )
 
         return jsonify({
             "answer": answer,
-            "type": "dataset",
+            "type": "observations",
             "data": result
         })
 
-    # ---------------------------------------
-    # DEPTH QUESTIONS
-    # ---------------------------------------
+
+    # ==================================================
+    # PRESSURE / DEPTH-RELATED QUESTIONS
+    # ==================================================
+
     elif (
-        "depth" in q
+        "pressure" in q
+        or "depth" in q
         or "deep" in q
-        or "pressure" in q
     ):
 
         result = dataset_summary()
 
-        answer = (
-            f"🌊 ARGO Depth Information\n\n"
-            f"Minimum Depth: {result['depth_min']} meters\n"
-            f"Maximum Depth: {result['depth_max']} meters"
-        )
+        if (
+            "minimum" in q
+            or "lowest" in q
+            or "min" in q
+        ):
+
+            answer = (
+                "🌊 Minimum ARGO Pressure\n\n"
+                f"{result['pressure_min']} dbar"
+            )
+
+        elif (
+            "maximum" in q
+            or "highest" in q
+            or "max" in q
+            or "deepest" in q
+        ):
+
+            answer = (
+                "🌊 Maximum ARGO Pressure\n\n"
+                f"{result['pressure_max']} dbar"
+            )
+
+        else:
+
+            answer = (
+                "🌊 ARGO Pressure Range\n\n"
+                f"Minimum Pressure: "
+                f"{result['pressure_min']} dbar\n"
+                f"Maximum Pressure: "
+                f"{result['pressure_max']} dbar\n\n"
+                "Note: PRES represents pressure in the ARGO "
+                "dataset and is not treated as exact depth."
+            )
 
         return jsonify({
             "answer": answer,
-            "type": "depth",
+            "type": "pressure",
             "data": result
         })
 
-    # ---------------------------------------
-    # LOCATION QUESTIONS
-    # ---------------------------------------
+
+    # ==================================================
+    # LOCATION / MAP
+    # ==================================================
+
     elif (
         "location" in q
         or "latitude" in q
         or "longitude" in q
         or "region" in q
+        or "coverage" in q
+        or "map" in q
     ):
 
         result = dataset_summary()
 
-        answer = (
-            f"📍 ARGO Geographic Coverage\n\n"
-            f"Latitude: {result['latitude_min']}° "
-            f"to {result['latitude_max']}°\n"
-            f"Longitude: {result['longitude_min']}° "
-            f"to {result['longitude_max']}°"
-        )
+        if (
+            "latitude" in q
+            and "longitude" not in q
+        ):
+
+            answer = (
+                "📍 ARGO Latitude Coverage\n\n"
+                f"{result['latitude_min']}° "
+                f"to {result['latitude_max']}°"
+            )
+
+        elif (
+            "longitude" in q
+            and "latitude" not in q
+        ):
+
+            answer = (
+                "📍 ARGO Longitude Coverage\n\n"
+                f"{result['longitude_min']}° "
+                f"to {result['longitude_max']}°"
+            )
+
+        else:
+
+            answer = (
+                "📍 ARGO Geographic Coverage\n\n"
+                f"Latitude: "
+                f"{result['latitude_min']}° "
+                f"to {result['latitude_max']}°\n"
+                f"Longitude: "
+                f"{result['longitude_min']}° "
+                f"to {result['longitude_max']}°"
+            )
 
         return jsonify({
             "answer": answer,
             "type": "location",
-            "data": result
+            "data": result,
+            "visualization": location_data()
         })
 
-    # ---------------------------------------
-    # GENERAL DATASET QUESTION
-    # ---------------------------------------
+
+    # ==================================================
+    # GENERAL DATASET
+    # ==================================================
+
     elif (
         "dataset" in q
-        or "data" in q
-        or "argo" in q
+        or "argo data" in q
+        or "summary" in q
     ):
 
         result = dataset_summary()
 
         answer = (
-            f"🌊 FloatChat ARGO Dataset\n\n"
-            f"Observations: {result['observations']:,}\n"
-            f"ARGO Floats: {result['floats']:,}\n"
-            f"Latitude Range: {result['latitude_min']}° "
+            "🌊 FloatChat ARGO Dataset\n\n"
+            f"Observations: "
+            f"{result['observations']:,}\n"
+            f"ARGO Floats: "
+            f"{result['floats']:,}\n"
+            f"Latitude: "
+            f"{result['latitude_min']}° "
             f"to {result['latitude_max']}°\n"
-            f"Longitude Range: {result['longitude_min']}° "
+            f"Longitude: "
+            f"{result['longitude_min']}° "
             f"to {result['longitude_max']}°\n"
-            f"Depth Range: {result['depth_min']} "
-            f"to {result['depth_max']} meters"
+            f"Pressure: "
+            f"{result['pressure_min']} "
+            f"to {result['pressure_max']} dbar"
         )
 
         return jsonify({
@@ -199,21 +377,32 @@ def ask():
             "data": result
         })
 
-    # ---------------------------------------
-    # UNKNOWN QUESTION
-    # ---------------------------------------
+
+    # ==================================================
+    # HELP
+    # ==================================================
+
     else:
 
         answer = (
-            "🤖 I can currently analyze ARGO ocean data related to:\n\n"
+            "🤖 I couldn't understand that ARGO question yet.\n\n"
+            "Currently I can analyze:\n"
             "🌡️ Temperature\n"
             "💧 Salinity\n"
-            "📍 Location\n"
-            "🌊 Depth\n"
-            "🛰️ ARGO Floats\n"
+            "🌊 Pressure / depth-related data\n"
+            "📍 Geographic coverage\n"
+            "🛰️ ARGO floats\n"
             "📊 Observations\n\n"
-            "Try asking something like:\n"
-            "\"What is the average temperature?\""
+            "Try asking:\n"
+            "• What is the average temperature?\n"
+            "• Show temperature data\n"
+            "• What is the maximum salinity?\n"
+            "• Show salinity data\n"
+            "• How many ARGO floats are there?\n"
+            "• How many observations are there?\n"
+            "• What is the pressure range?\n"
+            "• Show ARGO locations on map\n"
+            "• Give me the dataset summary"
         )
 
         return jsonify({
@@ -222,6 +411,9 @@ def ask():
         })
 
 
+# ==================================================
+# RUN
+# ==================================================
+
 if __name__ == "__main__":
     app.run(debug=True)
-    
