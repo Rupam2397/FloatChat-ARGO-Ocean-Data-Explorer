@@ -1,29 +1,16 @@
 import copernicusmarine
 import numpy as np
-from datetime import datetime, timezone
+
+from datetime import (
+    datetime,
+    timezone,
+    timedelta
+)
 
 
-# ============================================================
+# ==========================================================
 # FLOATCHAT - COPERNICUS MARINE SERVICE
-# ============================================================
-#
-# CURRENT:
-#
-#   Temperature
-#   Salinity
-#   Ocean currents
-#   Current speed
-#   Current direction
-#   Latest/current available model data
-#   Location-specific queries
-#   Depth-specific queries
-#
-# ============================================================
-
-
-# ============================================================
-# DATASETS
-# ============================================================
+# ==========================================================
 
 DATASETS = {
 
@@ -38,9 +25,9 @@ DATASETS = {
 }
 
 
-# ============================================================
+# ==========================================================
 # CURRENT UTC TIME
-# ============================================================
+# ==========================================================
 
 def get_current_utc_time():
 
@@ -48,18 +35,140 @@ def get_current_utc_time():
         timezone.utc
     )
 
-    now = now.replace(
+    return now.replace(
         tzinfo=None
     )
 
-    return np.datetime64(
-        now
+
+# ==========================================================
+# NORMALIZE TARGET TIME
+# ==========================================================
+
+def normalize_target_time(
+    target_time=None
+):
+
+    if target_time is None:
+
+        return get_current_utc_time()
+
+
+    if isinstance(
+        target_time,
+        np.datetime64
+    ):
+
+        text = str(
+            target_time
+        )
+
+        return datetime.fromisoformat(
+            text.replace(
+                "Z",
+                ""
+            )
+        )
+
+
+    if isinstance(
+        target_time,
+        datetime
+    ):
+
+        if target_time.tzinfo:
+
+            target_time = (
+                target_time
+                .astimezone(
+                    timezone.utc
+                )
+                .replace(
+                    tzinfo=None
+                )
+            )
+
+        return target_time
+
+
+    if isinstance(
+        target_time,
+        str
+    ):
+
+        text = (
+            target_time
+            .strip()
+            .replace(
+                "Z",
+                ""
+            )
+        )
+
+        try:
+
+            return datetime.fromisoformat(
+                text
+            )
+
+        except ValueError:
+
+            try:
+
+                return datetime.strptime(
+                    text,
+                    "%Y-%m-%d"
+                )
+
+            except ValueError:
+
+                raise ValueError(
+                    "Invalid target date/time."
+                )
+
+
+    raise ValueError(
+        "Unsupported target date/time."
     )
 
 
-# ============================================================
+# ==========================================================
+# TIME WINDOW
+# ==========================================================
+
+def get_time_window(
+    target_time=None
+):
+
+    target = normalize_target_time(
+        target_time
+    )
+
+    # Daily products are being used.
+    # Open a small interval around the requested day.
+
+    day_start = target.replace(
+        hour=0,
+        minute=0,
+        second=0,
+        microsecond=0
+    )
+
+    day_end = day_start + timedelta(
+        hours=23,
+        minutes=59,
+        seconds=59
+    )
+
+    return (
+        target,
+        day_start,
+        day_end
+    )
+
+
+# ==========================================================
 # VALIDATION
-# ============================================================
+# ==========================================================
 
 def validate_coordinates(
     latitude,
@@ -69,48 +178,67 @@ def validate_coordinates(
 
     try:
 
-        latitude = float(latitude)
-        longitude = float(longitude)
-        depth = float(depth)
+        latitude = float(
+            latitude
+        )
 
-    except (TypeError, ValueError):
+        longitude = float(
+            longitude
+        )
+
+        depth = float(
+            depth
+        )
+
+    except (
+        TypeError,
+        ValueError
+    ):
 
         return {
+
             "success": False,
-            "error": (
+
+            "error":
                 "Latitude, longitude and depth "
                 "must be valid numbers."
-            )
         }
+
 
     if not -90 <= latitude <= 90:
 
         return {
+
             "success": False,
-            "error": (
-                "Latitude must be "
-                "between -90 and 90."
-            )
+
+            "error":
+                "Latitude must be between "
+                "-90 and 90."
         }
+
 
     if not -180 <= longitude <= 180:
 
         return {
+
             "success": False,
-            "error": (
-                "Longitude must be "
-                "between -180 and 180."
-            )
+
+            "error":
+                "Longitude must be between "
+                "-180 and 180."
         }
+
 
     if depth < 0:
 
         return {
+
             "success": False,
-            "error": (
+
+            "error":
                 "Depth cannot be negative."
-            )
         }
+
 
     return {
 
@@ -124,60 +252,142 @@ def validate_coordinates(
     }
 
 
-# ============================================================
+# ==========================================================
 # DEPTH RANGE
-# ============================================================
+# ==========================================================
 
-def get_depth_range(depth):
+def get_depth_range(
+    depth
+):
 
     if depth == 0:
 
-        minimum_depth = 0
+        # Shallowest Copernicus model level is
+        # approximately 0.494 m.
 
-        maximum_depth = 2
-
-    else:
-
-        minimum_depth = max(
+        return (
             0,
-            depth - 1
+            2
         )
 
-        maximum_depth = (
-            depth + 1
-        )
 
     return (
-        minimum_depth,
-        maximum_depth
+
+        max(
+            0,
+            depth - 1
+        ),
+
+        depth + 1
     )
 
 
-# ============================================================
+# ==========================================================
+# OPEN DATASET
+# ==========================================================
+
+def open_ocean_dataset(
+    variable,
+    latitude,
+    longitude,
+    depth,
+    target_time=None
+):
+
+    target, start_time, end_time = (
+        get_time_window(
+            target_time
+        )
+    )
+
+
+    minimum_depth, maximum_depth = (
+        get_depth_range(
+            depth
+        )
+    )
+
+
+    box = 0.15
+
+
+    dataset = (
+        copernicusmarine.open_dataset(
+
+            dataset_id=
+                DATASETS[
+                    variable
+                ],
+
+            minimum_longitude=
+                longitude - box,
+
+            maximum_longitude=
+                longitude + box,
+
+            minimum_latitude=
+                latitude - box,
+
+            maximum_latitude=
+                latitude + box,
+
+            minimum_depth=
+                minimum_depth,
+
+            maximum_depth=
+                maximum_depth,
+
+            start_datetime=
+                start_time,
+
+            end_datetime=
+                end_time,
+
+            coordinates_selection_method=
+                "nearest"
+        )
+    )
+
+
+    return (
+        dataset,
+        target
+    )
+
+
+# ==========================================================
 # SELECT OCEAN POINT
-# ============================================================
+# ==========================================================
 
 def select_ocean_point(
     dataset,
     latitude,
     longitude,
-    depth
+    depth,
+    target_time=None
 ):
 
-    current_time = (
-        get_current_utc_time()
+    target = normalize_target_time(
+        target_time
     )
 
-    latest = dataset.sel(
 
-        time=current_time,
+    target_np = np.datetime64(
+        target
+    )
+
+
+    selected_time = dataset.sel(
+
+        time=target_np,
 
         method="nearest"
     )
 
+
     if depth == 0:
 
-        point = latest.sel(
+        point = selected_time.sel(
 
             latitude=latitude,
 
@@ -189,9 +399,10 @@ def select_ocean_point(
             depth=0
         )
 
+
     else:
 
-        point = latest.sel(
+        point = selected_time.sel(
 
             latitude=latitude,
 
@@ -202,12 +413,13 @@ def select_ocean_point(
             method="nearest"
         )
 
+
     return point
 
 
-# ============================================================
+# ==========================================================
 # EXTRACT GRID INFORMATION
-# ============================================================
+# ==========================================================
 
 def extract_grid_information(
     point
@@ -216,46 +428,42 @@ def extract_grid_information(
     latitude = float(
 
         np.asarray(
-
             point[
                 "latitude"
             ].values
-
         ).squeeze()
     )
+
 
     longitude = float(
 
         np.asarray(
-
             point[
                 "longitude"
             ].values
-
         ).squeeze()
     )
+
 
     depth = float(
 
         np.asarray(
-
             point[
                 "depth"
             ].values
-
         ).squeeze()
     )
+
 
     time = str(
 
         np.asarray(
-
             point[
                 "time"
             ].values
-
         ).squeeze()
     )
+
 
     return (
         latitude,
@@ -265,14 +473,15 @@ def extract_grid_information(
     )
 
 
-# ============================================================
+# ==========================================================
 # TEMPERATURE
-# ============================================================
+# ==========================================================
 
 def get_ocean_temperature(
     latitude,
     longitude,
-    depth=0
+    depth=0,
+    target_time=None
 ):
 
     try:
@@ -285,11 +494,13 @@ def get_ocean_temperature(
             )
         )
 
+
         if not validation[
             "success"
         ]:
 
             return validation
+
 
         latitude = validation[
             "latitude"
@@ -303,77 +514,22 @@ def get_ocean_temperature(
             "depth"
         ]
 
-        print(
-            "\n========================================"
-        )
 
-        print(
-            "FLOATCHAT - OCEAN TEMPERATURE"
-        )
+        dataset, target = (
+            open_ocean_dataset(
 
-        print(
-            "========================================"
-        )
+                "temperature",
 
-        print(
-            "Connecting to Copernicus Marine..."
-        )
+                latitude,
 
-        print(
-            "Latitude :",
-            latitude
-        )
+                longitude,
 
-        print(
-            "Longitude:",
-            longitude
-        )
+                depth,
 
-        print(
-            "Depth    :",
-            depth,
-            "m"
-        )
-
-        box = 0.15
-
-        minimum_depth, maximum_depth = (
-            get_depth_range(
-                depth
+                target_time
             )
         )
 
-        dataset = (
-            copernicusmarine.open_dataset(
-
-                dataset_id=
-                DATASETS[
-                    "temperature"
-                ],
-
-                minimum_longitude=
-                longitude - box,
-
-                maximum_longitude=
-                longitude + box,
-
-                minimum_latitude=
-                latitude - box,
-
-                maximum_latitude=
-                latitude + box,
-
-                minimum_depth=
-                minimum_depth,
-
-                maximum_depth=
-                maximum_depth
-            )
-        )
-
-        print(
-            "\nTemperature dataset opened successfully."
-        )
 
         point = (
             select_ocean_point(
@@ -384,9 +540,12 @@ def get_ocean_temperature(
 
                 longitude,
 
-                depth
+                depth,
+
+                target
             )
         )
+
 
         temperature = float(
 
@@ -399,6 +558,7 @@ def get_ocean_temperature(
             ).squeeze()
         )
 
+
         if np.isnan(
             temperature
         ):
@@ -407,11 +567,12 @@ def get_ocean_temperature(
 
                 "success": False,
 
-                "error": (
+                "error":
                     "No valid ocean temperature "
-                    "was found at this coordinate."
-                )
+                    "was found at this coordinate "
+                    "for the requested date."
             }
+
 
         (
             grid_latitude,
@@ -423,9 +584,11 @@ def get_ocean_temperature(
             point
         )
 
+
         return {
 
-            "success": True,
+            "success":
+                True,
 
             "variable":
                 "temperature",
@@ -451,6 +614,9 @@ def get_ocean_temperature(
                     depth
             },
 
+            "requested_time":
+                target.isoformat(),
+
             "actual_grid_location": {
 
                 "latitude":
@@ -475,8 +641,9 @@ def get_ocean_temperature(
                 ],
 
             "data_type":
-                "nearest available operational model time"
+                "operational ocean model"
         }
+
 
     except Exception as error:
 
@@ -489,14 +656,15 @@ def get_ocean_temperature(
         }
 
 
-# ============================================================
+# ==========================================================
 # SALINITY
-# ============================================================
+# ==========================================================
 
 def get_ocean_salinity(
     latitude,
     longitude,
-    depth=0
+    depth=0,
+    target_time=None
 ):
 
     try:
@@ -509,11 +677,13 @@ def get_ocean_salinity(
             )
         )
 
+
         if not validation[
             "success"
         ]:
 
             return validation
+
 
         latitude = validation[
             "latitude"
@@ -527,77 +697,22 @@ def get_ocean_salinity(
             "depth"
         ]
 
-        print(
-            "\n========================================"
-        )
 
-        print(
-            "FLOATCHAT - OCEAN SALINITY"
-        )
+        dataset, target = (
+            open_ocean_dataset(
 
-        print(
-            "========================================"
-        )
+                "salinity",
 
-        print(
-            "Connecting to Copernicus Marine..."
-        )
+                latitude,
 
-        print(
-            "Latitude :",
-            latitude
-        )
+                longitude,
 
-        print(
-            "Longitude:",
-            longitude
-        )
+                depth,
 
-        print(
-            "Depth    :",
-            depth,
-            "m"
-        )
-
-        box = 0.15
-
-        minimum_depth, maximum_depth = (
-            get_depth_range(
-                depth
+                target_time
             )
         )
 
-        dataset = (
-            copernicusmarine.open_dataset(
-
-                dataset_id=
-                DATASETS[
-                    "salinity"
-                ],
-
-                minimum_longitude=
-                longitude - box,
-
-                maximum_longitude=
-                longitude + box,
-
-                minimum_latitude=
-                latitude - box,
-
-                maximum_latitude=
-                latitude + box,
-
-                minimum_depth=
-                minimum_depth,
-
-                maximum_depth=
-                maximum_depth
-            )
-        )
-
-        print(
-            "\nSalinity dataset opened successfully."
-        )
 
         point = (
             select_ocean_point(
@@ -608,9 +723,12 @@ def get_ocean_salinity(
 
                 longitude,
 
-                depth
+                depth,
+
+                target
             )
         )
+
 
         salinity = float(
 
@@ -623,6 +741,7 @@ def get_ocean_salinity(
             ).squeeze()
         )
 
+
         if np.isnan(
             salinity
         ):
@@ -631,11 +750,12 @@ def get_ocean_salinity(
 
                 "success": False,
 
-                "error": (
+                "error":
                     "No valid ocean salinity "
-                    "was found at this coordinate."
-                )
+                    "was found at this coordinate "
+                    "for the requested date."
             }
+
 
         (
             grid_latitude,
@@ -647,9 +767,11 @@ def get_ocean_salinity(
             point
         )
 
+
         return {
 
-            "success": True,
+            "success":
+                True,
 
             "variable":
                 "salinity",
@@ -675,6 +797,9 @@ def get_ocean_salinity(
                     depth
             },
 
+            "requested_time":
+                target.isoformat(),
+
             "actual_grid_location": {
 
                 "latitude":
@@ -699,8 +824,9 @@ def get_ocean_salinity(
                 ],
 
             "data_type":
-                "nearest available operational model time"
+                "operational ocean model"
         }
+
 
     except Exception as error:
 
@@ -713,14 +839,15 @@ def get_ocean_salinity(
         }
 
 
-# ============================================================
+# ==========================================================
 # OCEAN CURRENTS
-# ============================================================
+# ==========================================================
 
 def get_ocean_currents(
     latitude,
     longitude,
-    depth=0
+    depth=0,
+    target_time=None
 ):
 
     try:
@@ -733,11 +860,13 @@ def get_ocean_currents(
             )
         )
 
+
         if not validation[
             "success"
         ]:
 
             return validation
+
 
         latitude = validation[
             "latitude"
@@ -751,77 +880,22 @@ def get_ocean_currents(
             "depth"
         ]
 
-        print(
-            "\n========================================"
-        )
 
-        print(
-            "FLOATCHAT - OCEAN CURRENTS"
-        )
+        dataset, target = (
+            open_ocean_dataset(
 
-        print(
-            "========================================"
-        )
+                "currents",
 
-        print(
-            "Connecting to Copernicus Marine..."
-        )
+                latitude,
 
-        print(
-            "Latitude :",
-            latitude
-        )
+                longitude,
 
-        print(
-            "Longitude:",
-            longitude
-        )
+                depth,
 
-        print(
-            "Depth    :",
-            depth,
-            "m"
-        )
-
-        box = 0.15
-
-        minimum_depth, maximum_depth = (
-            get_depth_range(
-                depth
+                target_time
             )
         )
 
-        dataset = (
-            copernicusmarine.open_dataset(
-
-                dataset_id=
-                DATASETS[
-                    "currents"
-                ],
-
-                minimum_longitude=
-                longitude - box,
-
-                maximum_longitude=
-                longitude + box,
-
-                minimum_latitude=
-                latitude - box,
-
-                maximum_latitude=
-                latitude + box,
-
-                minimum_depth=
-                minimum_depth,
-
-                maximum_depth=
-                maximum_depth
-            )
-        )
-
-        print(
-            "\nCurrent dataset opened successfully."
-        )
 
         point = (
             select_ocean_point(
@@ -832,9 +906,12 @@ def get_ocean_currents(
 
                 longitude,
 
-                depth
+                depth,
+
+                target
             )
         )
+
 
         u_current = float(
 
@@ -847,6 +924,7 @@ def get_ocean_currents(
             ).squeeze()
         )
 
+
         v_current = float(
 
             np.asarray(
@@ -857,6 +935,7 @@ def get_ocean_currents(
 
             ).squeeze()
         )
+
 
         if (
             np.isnan(
@@ -872,17 +951,16 @@ def get_ocean_currents(
 
                 "success": False,
 
-                "error": (
-                    "No valid ocean current "
-                    "data was found at this coordinate."
-                )
+                "error":
+                    "No valid ocean-current data "
+                    "was found at this coordinate "
+                    "for the requested date."
             }
 
-        # ----------------------------------------------------
+
+        # --------------------------------------------------
         # CURRENT SPEED
-        #
-        # speed = sqrt(u² + v²)
-        # ----------------------------------------------------
+        # --------------------------------------------------
 
         current_speed = np.sqrt(
 
@@ -893,16 +971,10 @@ def get_ocean_currents(
             v_current ** 2
         )
 
-        # ----------------------------------------------------
-        # CURRENT DIRECTION
-        #
-        # Direction water is moving toward.
-        #
-        # 0   = North
-        # 90  = East
-        # 180 = South
-        # 270 = West
-        # ----------------------------------------------------
+
+        # --------------------------------------------------
+        # DIRECTION WATER IS MOVING TOWARD
+        # --------------------------------------------------
 
         direction_degrees = (
 
@@ -919,6 +991,7 @@ def get_ocean_currents(
             + 360
 
         ) % 360
+
 
         compass_directions = [
 
@@ -939,6 +1012,7 @@ def get_ocean_currents(
             "NW"
         ]
 
+
         compass_index = int(
 
             (
@@ -951,11 +1025,13 @@ def get_ocean_currents(
 
         ) % 8
 
+
         compass_direction = (
             compass_directions[
                 compass_index
             ]
         )
+
 
         (
             grid_latitude,
@@ -966,6 +1042,7 @@ def get_ocean_currents(
         ) = extract_grid_information(
             point
         )
+
 
         return {
 
@@ -1024,6 +1101,9 @@ def get_ocean_currents(
                     depth
             },
 
+            "requested_time":
+                target.isoformat(),
+
             "actual_grid_location": {
 
                 "latitude":
@@ -1048,8 +1128,9 @@ def get_ocean_currents(
                 ],
 
             "data_type":
-                "nearest available operational model time"
+                "operational ocean model"
         }
+
 
     except Exception as error:
 
@@ -1062,342 +1143,84 @@ def get_ocean_currents(
         }
 
 
-# ============================================================
-# DISPLAY TEMPERATURE
-# ============================================================
-
-def display_temperature_result(
-    result
-):
-
-    print(
-        "\n========================================"
-    )
-
-    print(
-        "TEMPERATURE RESULT"
-    )
-
-    print(
-        "========================================"
-    )
-
-    if not result[
-        "success"
-    ]:
-
-        print(
-            "ERROR:",
-            result["error"]
-        )
-
-        return
-
-    print(
-        "Temperature :",
-        result["value"],
-        result["unit"]
-    )
-
-    print(
-        "Latitude    :",
-        result[
-            "actual_grid_location"
-        ]["latitude"]
-    )
-
-    print(
-        "Longitude   :",
-        result[
-            "actual_grid_location"
-        ]["longitude"]
-    )
-
-    print(
-        "Depth       :",
-        result[
-            "actual_grid_location"
-        ]["depth"],
-        "m"
-    )
-
-    print(
-        "Time        :",
-        result["time"]
-    )
-
-    print(
-        "Source      :",
-        result["source"]
-    )
-
-
-# ============================================================
-# DISPLAY SALINITY
-# ============================================================
-
-def display_salinity_result(
-    result
-):
-
-    print(
-        "\n========================================"
-    )
-
-    print(
-        "SALINITY RESULT"
-    )
-
-    print(
-        "========================================"
-    )
-
-    if not result[
-        "success"
-    ]:
-
-        print(
-            "ERROR:",
-            result["error"]
-        )
-
-        return
-
-    print(
-        "Salinity    :",
-        result["value"],
-        result["unit"]
-    )
-
-    print(
-        "Latitude    :",
-        result[
-            "actual_grid_location"
-        ]["latitude"]
-    )
-
-    print(
-        "Longitude   :",
-        result[
-            "actual_grid_location"
-        ]["longitude"]
-    )
-
-    print(
-        "Depth       :",
-        result[
-            "actual_grid_location"
-        ]["depth"],
-        "m"
-    )
-
-    print(
-        "Time        :",
-        result["time"]
-    )
-
-    print(
-        "Source      :",
-        result["source"]
-    )
-
-
-# ============================================================
-# DISPLAY CURRENTS
-# ============================================================
-
-def display_current_result(
-    result
-):
-
-    print(
-        "\n========================================"
-    )
-
-    print(
-        "OCEAN CURRENT RESULT"
-    )
-
-    print(
-        "========================================"
-    )
-
-    if not result[
-        "success"
-    ]:
-
-        print(
-            "ERROR:",
-            result["error"]
-        )
-
-        return
-
-    print(
-        "Eastward U  :",
-        result[
-            "eastward_current"
-        ],
-        "m/s"
-    )
-
-    print(
-        "Northward V :",
-        result[
-            "northward_current"
-        ],
-        "m/s"
-    )
-
-    print(
-        "Speed       :",
-        result["speed"],
-        result["speed_unit"]
-    )
-
-    print(
-        "Direction   :",
-        result[
-            "direction_degrees"
-        ],
-        "degrees",
-        "("
-        + result["direction"]
-        + ")"
-    )
-
-    print(
-        "Meaning     :",
-        result[
-            "direction_description"
-        ]
-    )
-
-    print(
-        "Latitude    :",
-        result[
-            "actual_grid_location"
-        ]["latitude"]
-    )
-
-    print(
-        "Longitude   :",
-        result[
-            "actual_grid_location"
-        ]["longitude"]
-    )
-
-    print(
-        "Depth       :",
-        result[
-            "actual_grid_location"
-        ]["depth"],
-        "m"
-    )
-
-    print(
-        "Time        :",
-        result["time"]
-    )
-
-    print(
-        "Source      :",
-        result["source"]
-    )
-
-
-# ============================================================
+# ==========================================================
 # DIRECT TEST
-# ============================================================
+# ==========================================================
 
 if __name__ == "__main__":
 
-    test_latitude = 20.0
+    test_latitude = 3.7203503
 
-    test_longitude = 65.0
+    test_longitude = 73.2244152
 
     test_depth = 0
 
 
-    print(
-        "\n########################################"
+    today = (
+        get_current_utc_time()
+        .replace(
+            hour=0,
+            minute=0,
+            second=0,
+            microsecond=0
+        )
     )
 
-    print(
-        "TEST 1 - TEMPERATURE"
+
+    tomorrow = (
+        today
+        +
+        timedelta(
+            days=1
+        )
     )
 
+
     print(
-        "########################################"
+        "\nTODAY TEST:",
+        today
     )
 
-    temperature = (
+
+    today_temperature = (
         get_ocean_temperature(
 
             test_latitude,
 
             test_longitude,
 
-            test_depth
+            test_depth,
+
+            today
         )
     )
 
-    display_temperature_result(
-        temperature
+
+    print(
+        today_temperature
     )
 
 
     print(
-        "\n########################################"
+        "\nTOMORROW TEST:",
+        tomorrow
     )
 
-    print(
-        "TEST 2 - SALINITY"
-    )
 
-    print(
-        "########################################"
-    )
-
-    salinity = (
-        get_ocean_salinity(
+    tomorrow_temperature = (
+        get_ocean_temperature(
 
             test_latitude,
 
             test_longitude,
 
-            test_depth
+            test_depth,
+
+            tomorrow
         )
     )
 
-    display_salinity_result(
-        salinity
-    )
-
 
     print(
-        "\n########################################"
-    )
-
-    print(
-        "TEST 3 - CURRENTS"
-    )
-
-    print(
-        "########################################"
-    )
-
-    currents = (
-        get_ocean_currents(
-
-            test_latitude,
-
-            test_longitude,
-
-            test_depth
-        )
-    )
-
-    display_current_result(
-        currents
+        tomorrow_temperature
     )

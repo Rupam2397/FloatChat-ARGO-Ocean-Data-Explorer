@@ -10,8 +10,13 @@
         content="width=device-width, initial-scale=1.0"
     >
 
+    <meta
+        name="description"
+        content="FloatChat - Explore ARGO observations and global ocean conditions using natural language."
+    >
+
     <title>
-        FloatChat | ARGO Ocean Data
+        FloatChat | Global Ocean Intelligence
     </title>
 
 
@@ -46,7 +51,7 @@
         </div>
 
         <div class="nav-text">
-            ARGO Ocean Data Explorer
+            Global Ocean Intelligence Platform
         </div>
 
     </header>
@@ -59,17 +64,24 @@
     <main class="container">
 
 
-        <!-- HERO -->
+        <!-- ======================================
+             HERO
+        ======================================= -->
 
         <section class="hero">
 
+            <div class="hero-badge">
+                🌍 ARGO + Copernicus Marine
+            </div>
+
             <h1>
-                Explore Ocean Data with AI
+                Explore the Ocean with FloatChat
             </h1>
 
             <p>
-                Ask questions about ARGO ocean observations
-                using natural language.
+                Ask natural-language questions about
+                global ocean temperature, salinity,
+                currents and ARGO observations.
             </p>
 
         </section>
@@ -81,28 +93,77 @@
 
         <section class="chat-card">
 
-            <h2>
-                💬 Ask FloatChat
-            </h2>
+            <div class="section-heading">
 
-            <p class="description">
+                <div>
 
-                Ask about temperature, salinity,
-                pressure, location, ARGO floats
-                or observations.
+                    <h2>
+                        💬 Ask FloatChat
+                    </h2>
 
-            </p>
+                    <p class="description">
+                        Search global ocean conditions
+                        or analyze available ARGO
+                        observations.
+                    </p>
 
+                </div>
+
+            </div>
+
+
+            <!-- QUICK EXAMPLES -->
+
+            <div class="example-questions">
+
+                <button
+                    type="button"
+                    class="example-button"
+                    data-question="Ocean conditions in Maldives today"
+                >
+                    🌊 Maldives Today
+                </button>
+
+
+                <button
+                    type="button"
+                    class="example-button"
+                    data-question="Ocean conditions in Maldives tomorrow"
+                >
+                    🔮 Maldives Tomorrow
+                </button>
+
+
+                <button
+                    type="button"
+                    class="example-button"
+                    data-question="Temperature near Arabian Sea today"
+                >
+                    🌡️ Arabian Sea
+                </button>
+
+
+                <button
+                    type="button"
+                    class="example-button"
+                    data-question="Show ARGO locations on map"
+                >
+                    🛰️ ARGO Map
+                </button>
+
+            </div>
+
+
+            <!-- SEARCH -->
 
             <div class="input-area">
 
                 <input
                     type="text"
                     id="question"
-                    placeholder="Example: Show temperature data"
+                    placeholder="Example: Ocean conditions in Maldives tomorrow"
                     autocomplete="off"
                 >
-
 
                 <button
                     id="askButton"
@@ -113,6 +174,12 @@
 
             </div>
 
+
+            <p class="input-hint">
+                Try Maldives, Arabian Sea, Bay of Bengal
+                or another ocean/coastal location.
+            </p>
+
         </section>
 
 
@@ -122,24 +189,330 @@
 
         <section class="result-card">
 
-            <h2>
-                📊 Results
-            </h2>
+            <div class="result-heading">
 
+                <h2>
+                    📊 Results
+                </h2>
+
+                <span
+                    id="resultSourceBadge"
+                    class="source-badge"
+                ></span>
+
+            </div>
+
+
+            <!-- NORMAL TEXT RESULT -->
 
             <div id="result">
 
                 <p class="placeholder">
-
-                    Your ARGO analysis and
-                    visualization will appear here.
-
+                    Your FloatChat analysis will
+                    appear here.
                 </p>
 
             </div>
 
 
-            <!-- Plotly chart/map -->
+            <!-- ==================================
+                 GLOBAL OCEAN DASHBOARD
+            =================================== -->
+
+            <div
+                id="oceanDashboard"
+                class="ocean-dashboard"
+                style="display: none;"
+            >
+
+
+                <!-- LOCATION HEADER -->
+
+                <div class="ocean-location-header">
+
+                    <div>
+
+                        <!--
+                            Dynamic:
+                            CURRENT OCEAN CONDITIONS
+                            OCEAN FORECAST
+                            PAST OCEAN CONDITIONS
+                        -->
+
+                        <p
+                            class="dashboard-label"
+                            id="oceanTemporalLabel"
+                        >
+                            CURRENT OCEAN CONDITIONS
+                        </p>
+
+
+                        <h2 id="oceanPlace">
+                            Ocean Location
+                        </h2>
+
+
+                        <p id="oceanCoordinates">
+                            --
+                        </p>
+
+                    </div>
+
+
+                    <!-- DYNAMIC OPERATIONAL STATUS -->
+
+                    <div class="live-indicator">
+
+                        <span class="live-dot"></span>
+
+                        <span id="oceanStatusLabel">
+                            Operational Data
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================
+                     METRICS
+                =================================== -->
+
+                <div class="ocean-metrics">
+
+
+                    <!-- TEMPERATURE -->
+
+                    <div class="metric-card">
+
+                        <div class="metric-icon">
+                            🌡️
+                        </div>
+
+                        <div class="metric-title">
+                            Temperature
+                        </div>
+
+                        <div
+                            id="oceanTemperature"
+                            class="metric-value"
+                        >
+                            --
+                        </div>
+
+                        <div class="metric-description">
+                            Ocean water temperature
+                        </div>
+
+                    </div>
+
+
+                    <!-- SALINITY -->
+
+                    <div class="metric-card">
+
+                        <div class="metric-icon">
+                            💧
+                        </div>
+
+                        <div class="metric-title">
+                            Salinity
+                        </div>
+
+                        <div
+                            id="oceanSalinity"
+                            class="metric-value"
+                        >
+                            --
+                        </div>
+
+                        <div class="metric-description">
+                            Practical salinity
+                        </div>
+
+                    </div>
+
+
+                    <!-- CURRENT SPEED -->
+
+                    <div class="metric-card">
+
+                        <div class="metric-icon">
+                            🌊
+                        </div>
+
+                        <div class="metric-title">
+                            Current Speed
+                        </div>
+
+                        <div
+                            id="oceanCurrentSpeed"
+                            class="metric-value"
+                        >
+                            --
+                        </div>
+
+                        <div class="metric-description">
+                            Ocean current velocity
+                        </div>
+
+                    </div>
+
+
+                    <!-- CURRENT DIRECTION -->
+
+                    <div class="metric-card">
+
+                        <div class="metric-icon">
+                            🧭
+                        </div>
+
+                        <div class="metric-title">
+                            Current Direction
+                        </div>
+
+                        <div
+                            id="oceanCurrentDirection"
+                            class="metric-value"
+                        >
+                            --
+                        </div>
+
+                        <div class="metric-description">
+                            Direction water moves toward
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================
+                     DETAILS
+                =================================== -->
+
+                <div class="ocean-details">
+
+
+                    <!-- REQUESTED DATE -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            📅 Requested Date
+                        </span>
+
+                        <strong id="oceanRequestedDate">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <!-- MODEL DEPTH -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            📏 Model Depth
+                        </span>
+
+                        <strong id="oceanDepth">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <!-- DATA TIME -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            🕐 Data Time
+                        </span>
+
+                        <strong id="oceanTime">
+                            --
+                        </strong>
+
+                    </div>
+
+
+                    <!-- SOURCE -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            🛰️ Source
+                        </span>
+
+                        <strong>
+                            Copernicus Marine
+                        </strong>
+
+                    </div>
+
+
+                    <!-- DATA TYPE -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            📊 Data Type
+                        </span>
+
+                        <strong id="oceanDataType">
+                            Operational Ocean Model
+                        </strong>
+
+                    </div>
+
+
+                    <!-- TEMPORAL MODE -->
+
+                    <div class="detail-item">
+
+                        <span>
+                            🗓️ Temporal Mode
+                        </span>
+
+                        <strong id="oceanTemporalMode">
+                            Current
+                        </strong>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================
+                     MAP
+                =================================== -->
+
+                <div class="map-section">
+
+                    <div class="map-title">
+
+                        <h3>
+                            🌍 Query Location
+                        </h3>
+
+                        <p>
+                            Geographic position used for
+                            the ocean model query.
+                        </p>
+
+                    </div>
+
+                    <div id="oceanMap"></div>
+
+                </div>
+
+            </div>
+
+
+            <!-- EXISTING ARGO VISUALIZATION -->
 
             <div id="visualization"></div>
 
@@ -147,7 +520,85 @@
 
 
         <!-- ======================================
-             INFO CARDS
+             DATA SOURCES
+        ======================================= -->
+
+        <section class="source-section">
+
+            <div class="section-title">
+
+                <h2>
+                    🌐 Ocean Intelligence Sources
+                </h2>
+
+                <p>
+                    FloatChat keeps measured observations
+                    and operational ocean-model data
+                    clearly separated.
+                </p>
+
+            </div>
+
+
+            <div class="source-grid">
+
+
+                <!-- ARGO -->
+
+                <div class="source-card">
+
+                    <div class="source-icon">
+                        🛰️
+                    </div>
+
+                    <h3>
+                        ARGO Observations
+                    </h3>
+
+                    <p>
+                        Explore profiling-float observations
+                        including temperature, salinity,
+                        pressure and geographic coverage.
+                    </p>
+
+                    <span class="data-label">
+                        OBSERVATION DATA
+                    </span>
+
+                </div>
+
+
+                <!-- COPERNICUS -->
+
+                <div class="source-card">
+
+                    <div class="source-icon">
+                        🌍
+                    </div>
+
+                    <h3>
+                        Copernicus Marine
+                    </h3>
+
+                    <p>
+                        Explore location-specific operational
+                        ocean temperature, salinity and
+                        current information.
+                    </p>
+
+                    <span class="data-label">
+                        OPERATIONAL MODEL DATA
+                    </span>
+
+                </div>
+
+            </div>
+
+        </section>
+
+
+        <!-- ======================================
+             FEATURES
         ======================================= -->
 
         <section class="info-grid">
@@ -160,9 +611,9 @@
                 </h3>
 
                 <p>
-                    Analyze temperature statistics
-                    and visualize temperature against
-                    pressure.
+                    Explore global ocean temperature
+                    conditions or analyze ARGO
+                    temperature observations.
                 </p>
 
             </div>
@@ -175,9 +626,9 @@
                 </h3>
 
                 <p>
-                    Analyze practical salinity
-                    observations and visualize
-                    salinity against pressure.
+                    Explore global ocean salinity
+                    conditions and ARGO practical
+                    salinity observations.
                 </p>
 
             </div>
@@ -186,13 +637,12 @@
             <div class="info-card">
 
                 <h3>
-                    📍 Location
+                    🌊 Ocean Currents
                 </h3>
 
                 <p>
-                    Explore the geographic coverage
-                    of ARGO observations using an
-                    interactive map.
+                    View eastward and northward current
+                    components, speed and direction.
                 </p>
 
             </div>
@@ -201,12 +651,13 @@
             <div class="info-card">
 
                 <h3>
-                    🌊 Pressure
+                    🌍 Global Search
                 </h3>
 
                 <p>
-                    Explore the pressure range
-                    available in the ARGO dataset.
+                    Search ocean conditions using
+                    geographic place names resolved
+                    to latitude and longitude.
                 </p>
 
             </div>
@@ -219,9 +670,9 @@
                 </h3>
 
                 <p>
-                    Find the number of unique
-                    profiling floats represented
-                    in the dataset.
+                    Explore profiling floats and
+                    observation records in the
+                    current ARGO dataset.
                 </p>
 
             </div>
@@ -230,17 +681,16 @@
             <div class="info-card">
 
                 <h3>
-                    📊 Observations
+                    📍 Interactive Maps
                 </h3>
 
                 <p>
-                    Explore the number of ARGO
-                    observation records available
-                    for analysis.
+                    Visualize ARGO observations and
+                    locations used for global ocean
+                    queries.
                 </p>
 
             </div>
-
 
         </section>
 
@@ -254,8 +704,13 @@
     <footer>
 
         <p>
-            FloatChat — AI-Powered Conversational Interface
-            for ARGO Ocean Data
+            🌊 FloatChat — AI-Powered Conversational
+            Interface for Ocean Data
+        </p>
+
+        <p class="footer-subtitle">
+            ARGO Observations • Copernicus Marine
+            Operational Ocean Data
         </p>
 
     </footer>
@@ -266,7 +721,6 @@
     <script
         src="{{ url_for('static', filename='js/script.js') }}">
     </script>
-
 
 </body>
 
